@@ -1,0 +1,7 @@
+name = "WhatIsHappening"
+uuid = "964570a8-5a27-4270-acbc-3d103c50fc15"
+authors = ["Tomas Fiers <tomas.fiers@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+MacroTools = "1914dd2f-81c6-5fcd-8719-6d5c9610ff09"
