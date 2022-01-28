@@ -5,39 +5,21 @@ using MacroTools  # (This is fast).
 export @withfeedback
 
 """
-    @withfeedback [message] [message_after] expression
+    @withfeedback [message] expression
 
 Print what is happening during `expression`, then execute the expression. If no `message` is
 specified, the expression itself is used as message.
-
-If `message_after` is specified, print a second message after the operation has completed.
-This second message is either the specified string, or, if set to `true`, the original
-message plus a check mark. By default, no message is printed after the operation.
 """
-macro withfeedback(message::String, message_after, expr)
+macro withfeedback(message::String, expr)
     quote
-        @info $message
+        println($message)
+        flush(stdout)
         $(esc(expr))
-        if !isnothing($message_after)
-            if $message_after == true
-                @info $message * " ✓"
-            else
-                @info $message_after
-            end
-        end
     end
 end
 
-macro withfeedback(message, expr)
-    :( @withfeedback $message nothing $(esc(expr)))
-end
-
-macro withfeedback(::Val{true}, expr)
-    :( @withfeedback $(_content_as_string(expr)) true $(esc(expr)) )
-end
-
 macro withfeedback(expr)
-    :( @withfeedback $(_content_as_string(expr)) nothing $(esc(expr)))
+    :( @withfeedback $(_content_as_string(expr)) $(esc(expr)))
 end
 
 function _content_as_string(expr)
@@ -49,6 +31,14 @@ function _content_as_string(expr)
         return string(expr)
     end
 end
+
+
+#= manual @withfeedback during dev of this:
+print("using Revise … ")
+flush(stdout)
+using Revise
+println("✓")
+=#
 
 
 end # module
