@@ -1,8 +1,7 @@
 module WhatIsHappening
 
+using Logging
 using MacroTools  # (This is fast).
-
-export @withfeedback
 
 """
     @withfeedback [message] expression
@@ -12,8 +11,8 @@ specified, the expression itself is used as message.
 """
 macro withfeedback(message::String, expr)
     quote
-        println($message)
-        flush(stdout)
+        @info $message
+        flush(_get_logging_stream())
         $(esc(expr))
     end
 end
@@ -32,13 +31,17 @@ function _content_as_string(expr)
     end
 end
 
+function _get_logging_stream()
+    io = current_logger().stream
+    if isopen(io)
+        return io
+    else
+        # Emulate what the default loggers do both in IJulia (which uses a SimpleLogger)
+        # and in the REPL (which uses a ConsoleLogger).
+        return stderr
+    end
+end
 
-#= manual @withfeedback during dev of this:
-print("using Revise … ")
-flush(stdout)
-using Revise
-println("✓")
-=#
-
+export @withfeedback
 
 end # module
