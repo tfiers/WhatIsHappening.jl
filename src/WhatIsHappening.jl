@@ -14,7 +14,7 @@ specified, the expression itself is used as message.
 macro withfeedback(message::String, expr)
     quote
         @info $message
-        flush(_get_logging_stream())
+        _flush_logging_stream()
         $(esc(expr))
     end
 end
@@ -33,14 +33,28 @@ function _content_as_string(expr)
     end
 end
 
-function _get_logging_stream()
-    io = current_logger().stream
-    if isopen(io)
-        return io
+function _flush_logging_stream()
+    logger = current_logger()
+    # Handle the wrapping loggers of LoggingExtras.jl.
+    if hasproperty(logger, :logger)
+        logger = logger.logger
+    end
+    #   [Not done: deeper unwrapping (`while`); and flushing multiple for teed/multiplexed]
+    if hasproperty(logger, :stream)
+        io = logger.stream
+        # Emulate what the default loggers do both in IJulia and in the REPL (one is a
+        # SimpleLogger, the other a ConsoleLogger). They both check `isopen` and otherwise
+        # use `stderr`.
+        if isopen(io)
+            flush(io)
+        else
+            flush(stderr)
+        end
     else
-        # Emulate what the default loggers do both in IJulia (which uses a SimpleLogger)
-        # and in the REPL (which uses a ConsoleLogger).
-        return stderr
+        # This is the case in vscode. We could check whether `logger isa VSCodeLogger`, but
+        # that adds a dependency; and the defining package is not registered anyway. In any
+        # case: no action needed, VSCodeLogger flushes after every message:
+        # https://github.com/julia-vscode/julia-vscode/blob/master/scripts/packages/VSCodeServer/src/progress.jl#L7
     end
 end
 
