@@ -3,6 +3,8 @@ module WhatIsHappening
 using Logging
 using MacroTools  # (This is fast).
 
+export @withfeedback, prettify_logging_in_notebook!, get_pretty_notebook_logger
+
 """
     @withfeedback [message] expression
 
@@ -18,7 +20,7 @@ macro withfeedback(message::String, expr)
 end
 
 macro withfeedback(expr)
-    :( @withfeedback $(_content_as_string(expr)) $(esc(expr)))
+    :( @withfeedback $(_content_as_string(rmlines(expr))) $(esc(expr)))
 end
 
 function _content_as_string(expr)
@@ -42,6 +44,10 @@ function _get_logging_stream()
     end
 end
 
-export @withfeedback
+"""Prettier @info display in IJulia than the default (which is noisy, and on a red bg)."""
+prettify_logging_in_notebook!() = global_logger(get_pretty_notebook_logger())
+
+get_pretty_notebook_logger() = ConsoleLogger(stdout)
+#   A function, as `stdout` is modified, e.g. by IJulia.
 
 end # module
